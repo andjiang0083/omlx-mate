@@ -1,0 +1,9 @@
+.pio/
+.vscode/
+.DS_Store
+__pycache__/
+*.pyc
+agent/__pycache__/
+src/assets.h
+releases/*.bin
+releases/*.sha256

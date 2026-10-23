@@ -1,0 +1,41 @@
+#pragma once
+#include <stdint.h>
+
+// ---------------------------------------------------------------- 产品身份
+#define FW_NAME "oMLX Mate"
+#define FW_VERSION "0.2.1"
+#define FW_BUILD __DATE__ " " __TIME__
+
+// ---------------------------------------------------------------- 屏幕
+static constexpr int SCREEN_W = 240;
+static constexpr int SCREEN_H = 135;
+
+// ---------------------------------------------------------------- 调色板
+// 与网页看板 (omlx-savings) 同一套 Product Teal token, 换算成 RGB565.
+#define C_BG 0x08A2      // #0E1614 页面底色
+#define C_SURF 0x10E3    // #131D1B 卡片
+#define C_SURF2 0x1924   // #1A2523 次级面
+#define C_BORDER 0x2185  // #25332F 分隔线
+#define C_TEXT 0xEF9D    // #E8F1EE 主文字
+#define C_TEXT2 0xBE58   // #BAC9C5 次文字
+#define C_MUTED 0x8D14   // #8FA3A0 弱文字
+#define C_TEAL 0x0D2F    // #0CA678 品牌主色
+#define C_TEAL2 0x15D0   // #12B886 亮青
+#define C_TEAL_DIM 0x0A8C // 约 #0A4A38 柱状图底色
+#define C_SOFT 0xDFBD    // #D9F5EC 亮青底
+#define C_AMBER 0xF4E0   // #F59F00 峰时
+#define C_RED 0xE186     // #E03131 错误/离线
+#define C_GREEN 0x3589   // #37B24D 正常
+#define C_WHITE 0xFFFF
+#define C_DIM 0x6BEF // #6C7F7D
+
+// ---------------------------------------------------------------- 行为参数
+static constexpr uint32_t FETCH_INTERVAL_MS = 5000;      // 醒着时轮询
+static constexpr uint32_t FETCH_INTERVAL_SLEEP_MS = 30000; // 熄屏后降频
+static constexpr uint32_t DIM_AFTER_MS = 60000;           // 变暗
+static constexpr uint32_t OFF_AFTER_MS = 180000;          // 电池供电时熄屏 (充电时不熄)
+static constexpr uint8_t DEFAULT_BRIGHTNESS = 90;
+static constexpr uint8_t DIM_BRIGHTNESS = 35;
+static constexpr uint32_t HTTP_TIMEOUT_MS = 6000;
+static constexpr uint32_t WIFI_TIMEOUT_MS = 20000;
+static constexpr uint16_t HTTP_PORT = 80;
