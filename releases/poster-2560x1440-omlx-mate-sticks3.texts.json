@@ -1,0 +1,82 @@
+{
+ "entry": "oMLX Mate",
+ "cover": "releases/poster-2560x1440-omlx-mate-sticks3.png",
+ "canvas": [
+  1280,
+  720
+ ],
+ "layout": "frame",
+ "hero": {
+  "kind": "frame",
+  "path": "docs/images/device-savings.png",
+  "px": [
+   480,
+   270
+  ],
+  "scale": 2
+ },
+ "texts": [
+  {
+   "s": "oMLX MATE",
+   "kind": "text",
+   "bbox": [
+    62,
+    136,
+    622,
+    206
+   ]
+  },
+  {
+   "s": "本地大模型省下的钱，摆在桌面上",
+   "kind": "text",
+   "bbox": [
+    62,
+    247,
+    557,
+    279
+   ]
+  },
+  {
+   "s": "今日已省 · tokens · 命中率，一屏看完",
+   "kind": "text",
+   "bbox": [
+    86,
+    316,
+    552,
+    341
+   ]
+  },
+  {
+   "s": "7 天 / 30 天净省曲线与峰谷电费",
+   "kind": "text",
+   "bbox": [
+    86,
+    356,
+    455,
+    382
+   ]
+  },
+  {
+   "s": "Mac 只读本地用量库，数据不出局域网",
+   "kind": "text",
+   "bbox": [
+    86,
+    396,
+    521,
+    421
+   ]
+  },
+  {
+   "s": "What your local AI saved you, on a desk screen",
+   "kind": "text",
+   "bbox": [
+    62,
+    456,
+    513,
+    474
+   ]
+  }
+ ],
+ "generator": "tools/mkcover.py",
+ "generated": "2026-10-23T15:42:31"
+}

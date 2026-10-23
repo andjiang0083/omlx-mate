@@ -17,7 +17,7 @@ OUT="releases/omlx-mate-v${VER}-merged.bin"
 rm -f "$OUT" "$OUT.sha256"
 echo "▸ 合并镜像…"
 esptool --chip esp32s3 merge_bin -o "$OUT" \
-  --flash_mode qio --flash_freq 80m --flash_size 8MB \
+  --flash_mode dio --flash_freq 80m --flash_size 8MB \
   0x0 "$B/bootloader.bin" \
   0x8000 "$B/partitions.bin" \
   0xe000 "$BOOT_APP0" \

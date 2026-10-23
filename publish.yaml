@@ -1,0 +1,13 @@
+# omlx-mate — M5Burner 发布清单（发布前由 tools/release.py / tools/check_merged.py 校验）
+# 修改版本时同步改这里；bin 必须是真 merged（bootloader + 分区表 + app）。
+project: omlx-mate
+platform_entries:
+  - name: oMLX Mate
+    device: StickS3
+    category: Tools
+    version: "0.2.1"
+    bin: releases/omlx-mate-v0.2.1-merged.bin
+    cover: releases/cover-1280x720-omlx-mate-sticks3.png
+    project_link: "https://github.com/andjiang0083/omlx-mate"
+    readback: 2026-10-23 PENDING vid=2113540274083143682   # 新条目首次上架，审核队列中（公开接口/商店页过审前不显示）
+    github: https://github.com/andjiang0083/omlx-mate
