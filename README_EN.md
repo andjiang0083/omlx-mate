@@ -19,7 +19,7 @@ The device only renders; the Mac is the data core. oMLX never has to listen on t
 
 ## Quick start
 
-1. Flash `releases/omlx-mate-v0.2.1-merged.bin` (M5Burner or `esptool`), or `pio run -e sticks3 -t upload`.
+1. Download `omlx-mate-v0.2.1-merged.bin` from [Releases](https://github.com/andjiang0083/omlx-mate/releases/latest) and flash it at `0x0` (M5Burner or `esptool`), or run `pio run -e sticks3 -t upload`.
 2. Power on. Scan the QR code, join `oMLX-Mate-XXXX` (password `omlxmate`), open `http://192.168.4.1`, enter your 2.4 GHz Wi-Fi.
 3. The device shows `http://omlx-mate-xxxx.local`. Open it on the Mac and run:
 

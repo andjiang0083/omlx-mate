@@ -66,7 +66,7 @@ oMLX (127.0.0.1:8000)                StickS3 (ESP32-S3)
 
 ### 1. 烧录固件
 
-用 M5Burner 烧 `releases/omlx-mate-v0.2.1-merged.bin`，或：
+从 [Releases](https://github.com/andjiang0083/omlx-mate/releases/latest) 下载 `omlx-mate-v0.2.1-merged.bin`，用 M5Burner 或 esptool 写到 `0x0`；也可以本地编译：
 
 ```bash
 pio run -e sticks3 -t upload --upload-port /dev/cu.usbmodem*
