@@ -3,6 +3,8 @@
 #include <M5Unified.h>
 #include <qrcode.h>
 
+#include "board.h"   // 底部导航提示随板型切换
+
 #include <cstdio>
 #include <cstring>
 
@@ -238,8 +240,8 @@ static void drawFooter(const DisplayConfig& dc, const UiState& st) {
     if (i == st.page) canvas.fillCircle(cx, 128, 2.5f, C_TEAL2);
     else canvas.drawCircle(cx, 128, 2, C_BORDER);
   }
-  tl(6, 123, "A >", C_DIM, F12);
-  tr(234, 123, "< B", C_DIM, F12);
+  tl(6, 123, BOARD_NAV_LEFT, C_DIM, F12);
+  tr(234, 123, BOARD_NAV_RIGHT, C_DIM, F12);
 }
 
 // ---------------------------------------------------------------- 页面

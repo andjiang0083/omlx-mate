@@ -1,11 +1,11 @@
 #include <ArduinoOTA.h>
-#include <M5Unified.h>
 #include <WiFi.h>
 
 #include <cstdio>
 #include <cstring>
 
 #include "app.h"
+#include "board.h"   // 板级抽象（StickS3 按键 ↔ Cardputer 键盘）
 #include "config.h"
 #include "display.h"
 #include "net.h"
@@ -167,7 +167,7 @@ static void wakeScreen() {
 
 static void enterPortal() {
   Serial.println("[PORTAL] enter");
-  uiSplash("配置网络", "手机连接 oMLX-Mate-XXXX", "长按 B 退出");
+  uiSplash("配置网络", "手机连接 oMLX-Mate-XXXX", BOARD_KEY_HINT_RSET);
   PortalResult r = portalRun(g_cfg, 300000);
   if (r == PORTAL_SAVED) {
     uiSplash("配置已保存", "正在重启…", "");
@@ -179,19 +179,21 @@ static void enterPortal() {
   g_needRender = true;
 }
 
-static void handleButtons() {
-  if (M5.BtnA.isPressed() || M5.BtnB.isPressed()) wakeScreen();
-  if (millis() < 2500) return;
-  if (M5.BtnA.wasClicked()) {
+// 返回 true = 需要进入配网页（长按重配网）
+static bool handleButtons() {
+  if (boardAnyKeyDown()) wakeScreen();
+  BoardKey k = boardPollKey();
+  if (k == BK_RECONFIG) return true;
+  if (k == BK_NEXT) {
     g_page = (g_page + 1) % appPageCount();
     beep(2000);
     g_needRender = true;
-  }
-  if (M5.BtnB.wasClicked()) {
+  } else if (k == BK_PREV) {
     g_page = (g_page + appPageCount() - 1) % appPageCount();
     beep(1500);
     g_needRender = true;
   }
+  return false;
 }
 
 static void startServices() {
@@ -211,15 +213,14 @@ static void startServices() {
 
 // ---------------------------------------------------------------- 生命周期
 void setup() {
-  auto m5cfg = M5.config();
-  M5.begin(m5cfg);
+  boardBegin();
   Serial.begin(115200);
   delay(250);
 
-  M5.Power.setExtOutput(false);
-  M5.Display.setRotation(1);
+  boardPowerSetup();
+  boardScreenSetup();
   M5.Display.setBrightness(DEFAULT_BRIGHTNESS);
-  M5.Speaker.setVolume(48);
+  boardSpeakerSetup();
 
   uiBegin();
   uiSplash("正在启动", "读取配置…", "v" FW_VERSION);
@@ -258,11 +259,9 @@ void setup() {
 
 void loop() {
   if (g_rebootAt && millis() > g_rebootAt) ESP.restart();
-  M5.update();
+  boardUpdate();
   pollSerial();
-  handleButtons();
-
-  if (M5.BtnB.pressedFor(1600)) {
+  if (handleButtons()) {
     enterPortal();
     return;
   }

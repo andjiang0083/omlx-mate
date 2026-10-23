@@ -1,12 +1,12 @@
 #include "portal.h"
 
 #include <DNSServer.h>
-#include <M5Unified.h>
 #include <WebServer.h>
 #include <WiFi.h>
 
 #include <cstring>
 
+#include "board.h"   // 板级按键判据
 #include "config.h"
 #include "ui.h"
 
@@ -190,8 +190,8 @@ PortalResult portalRun(Config& cfg, uint32_t timeoutMs) {
   while (!saved && millis() - t0 < timeoutMs) {
     dns.processNextRequest();
     server.handleClient();
-    M5.update();
-    if (M5.BtnB.pressedFor(1500)) {
+    boardUpdate();
+    if (boardPortalWantsCancel()) {
       cancel = true;
       break;
     }

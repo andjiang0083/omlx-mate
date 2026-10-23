@@ -9,5 +9,15 @@ platform_entries:
     bin: releases/omlx-mate-v0.2.1-merged.bin
     cover: releases/cover-1280x720-omlx-mate-sticks3.png
     project_link: "https://github.com/andjiang0083/omlx-mate"
-    readback: 2026-10-23 PENDING vid=2113540274083143682   # 新条目首次上架，审核队列中（公开接口/商店页过审前不显示）
+    readback: 2026-10-23 PUBLISHED vid=2113540274083143682   # 已过审上线
+    published_version: 0.2.1
+    github: https://github.com/andjiang0083/omlx-mate
+  - name: oMLX Mate [cardputer]
+    device: Cardputer ADV
+    category: Tools
+    version: "0.2.2"
+    bin: releases/omlx-mate-v0.2.2-cardputer-merged.bin
+    cover: releases/cover-1280x720-omlx-mate-cardputeradv.png
+    project_link: "https://github.com/andjiang0083/omlx-mate"
+    readback: 2026-10-23 PENDING vid=2113642817916313603   # 新条目首次上架，审核队列中
     github: https://github.com/andjiang0083/omlx-mate

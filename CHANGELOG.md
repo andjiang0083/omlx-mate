@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2 — 2026-10-23
+
+- 新增 M5Cardputer ADV 版：同一份固件源码，实体键盘 `/` 下一页、`,` 上一页，长按 `R` 重新配网
+- 板型差异收敛到 `include/board.h`，两种设备上的页面渲染完全一致
+- Mac agent 与安装流程不变：Cardputer 版同样一条 curl 装好
+
 ## 0.2.1 — 2026-10-23
 
 - 固件内置最新 Mac agent（`/agent.py` 由设备直接提供，安装不依赖 GitHub）
