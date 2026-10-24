@@ -3,7 +3,7 @@
 
 // ---------------------------------------------------------------- 产品身份
 #define FW_NAME "oMLX Mate"
-#define FW_VERSION "0.2.2"
+#define FW_VERSION "0.2.3"
 #define FW_BUILD __DATE__ " " __TIME__
 
 // ---------------------------------------------------------------- 屏幕
@@ -31,11 +31,14 @@ static constexpr int SCREEN_H = 135;
 
 // ---------------------------------------------------------------- 行为参数
 static constexpr uint32_t FETCH_INTERVAL_MS = 5000;      // 醒着时轮询
-static constexpr uint32_t FETCH_INTERVAL_SLEEP_MS = 30000; // 熄屏后降频
 static constexpr uint32_t DIM_AFTER_MS = 60000;           // 变暗
-static constexpr uint32_t OFF_AFTER_MS = 180000;          // 电池供电时熄屏 (充电时不熄)
-static constexpr uint8_t DEFAULT_BRIGHTNESS = 90;
+static constexpr uint32_t OFF_AFTER_MS = 120000;          // 熄屏 = 下线（充电也一样）
+static constexpr uint8_t DEFAULT_BRIGHTNESS = 75;
 static constexpr uint8_t DIM_BRIGHTNESS = 35;
+static constexpr uint32_t SLEEP_CPU_MHZ = 80;             // 熄屏后降频
+static constexpr uint32_t AWAKE_CPU_MHZ = 240;
+static constexpr uint32_t SLEEP_POLL_MS = 100;            // 熄屏主循环间隔
+static constexpr uint32_t AGENT_PORT = 8788;              // agent 监听端口（Host 头缺失时兜底）
 static constexpr uint32_t HTTP_TIMEOUT_MS = 6000;
 static constexpr uint32_t WIFI_TIMEOUT_MS = 20000;
 static constexpr uint16_t HTTP_PORT = 80;

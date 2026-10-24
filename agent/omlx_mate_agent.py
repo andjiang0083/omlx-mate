@@ -28,7 +28,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
 APP_NAME = "oMLX Mate Agent"
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 LABEL = "com.omlx.mate"
 
 HOME = Path.home()
@@ -493,6 +493,8 @@ def push_device(dev: dict, snap: dict, display: dict, cfg: dict) -> None:
 
     def handle(res: dict, base: str) -> None:
         dev["online"] = True
+        dev["fail_count"] = 0
+        dev["retry_at"] = 0
         dev["last_seen"] = int(time.time())
         if base != primary:
             dev["ip_url"] = base
@@ -523,6 +525,11 @@ def push_device(dev: dict, snap: dict, display: dict, cfg: dict) -> None:
 
     dev["online"] = False
     dev["error"] = f"{type(last_exc).__name__}: {last_exc}" if last_exc else "push failed"
+    # 设备熄屏会主动断网（省电），失败 3 次后退避 30s，别让一台离线设备把推送循环拖住
+    fails = int(dev.get("fail_count", 0)) + 1
+    dev["fail_count"] = fails
+    if fails >= 3:
+        dev["retry_at"] = int(time.time()) + 30
 
 
 def pusher_loop(cfg_holder: dict) -> None:
@@ -540,6 +547,8 @@ def pusher_loop(cfg_holder: dict) -> None:
             if devices:
                 threads = []
                 for dev in devices:
+                    if int(dev.get("retry_at", 0)) > time.time():
+                        continue          # 熄屏中（主动下线），退避期不重复超时
                     th = threading.Thread(target=push_device, args=(dev, snap, display, cfg),
                                           daemon=True)
                     th.start()
@@ -871,6 +880,20 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        # 设备侧主动拉（熄屏唤醒后立刻刷新）：设备 token 鉴权，不走控制台访问码
+        if path == "/api/snapshot":
+            q = parse_qs(urlparse(self.path).query)
+            k = (q.get("k") or [""])[0]
+            with CFG_LOCK:
+                cfg = json.loads(json.dumps(CFG))
+            if not k or not any(str(d.get("token", "")) == k for d in cfg.get("devices", [])):
+                return self._json({"ok": 0, "error": "token"}, 401)
+            snap = CACHED_SNAP or build_snapshot(cfg)
+            body = dict(snap)
+            body["display"] = cfg["display"]
+            body["cmd"] = None
+            log(f"device pull <- {self.client_address[0]}")
+            return self._json(body)
         if path == "/":
             if not self._authed():
                 return self._send(401, b"need code", "text/plain")

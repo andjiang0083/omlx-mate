@@ -15,9 +15,9 @@ platform_entries:
   - name: oMLX Mate [cardputer]
     device: Cardputer ADV
     category: Tools
-    version: "0.2.2"
-    bin: releases/omlx-mate-v0.2.2-cardputer-merged.bin
+    version: "0.2.3"
+    bin: releases/omlx-mate-v0.2.3-cardputer-merged.bin
     cover: releases/cover-1280x720-omlx-mate-cardputeradv.png
     project_link: "https://github.com/andjiang0083/omlx-mate"
-    readback: 2026-10-23 PENDING vid=2113642817916313603   # 新条目首次上架，审核队列中
+    readback: 2026-10-24 PENDING vid=2114014425113763842   # 0.2.3 已提交（0.2.2 撤回为 DRAFT）
     github: https://github.com/andjiang0083/omlx-mate

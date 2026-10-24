@@ -14,6 +14,7 @@ static uint32_t s_startedAt = 0;
 static uint32_t s_retryAt = 0;
 static char s_ip[16] = "--";
 static bool s_mdns = false;
+static bool s_enabled = true;   // false = 射频已关（熄屏），netPoll 直接返回
 
 void netBegin(const Config& cfg) {
   WiFi.persistent(false);
@@ -28,7 +29,39 @@ void netBegin(const Config& cfg) {
   }
 }
 
+// 熄屏 = 主动下线：射频关掉后连 WiFi.status() 都不再轮询，避免任何唤醒电流
+void netOff() {
+  if (!s_enabled) return;
+  s_enabled = false;
+  s_up = false;
+  s_justUp = false;
+  s_startedAt = 0;
+  s_retryAt = 0;
+  if (s_mdns) {
+    MDNS.end();
+    s_mdns = false;
+  }
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  Serial.println("[NET] radio off");
+}
+
+void netOn() {
+  if (s_enabled) return;
+  s_enabled = true;
+  s_up = false;
+  s_retryAt = 0;
+  WiFi.mode(WIFI_STA);
+  WiFi.setHostname(g_hostname);
+  if (g_cfg.ssid[0]) {
+    WiFi.begin(g_cfg.ssid, g_cfg.pass);
+    s_startedAt = millis();
+    Serial.printf("[NET] radio on, connecting %s\n", g_cfg.ssid);
+  }
+}
+
 void netPoll() {
+  if (!s_enabled) return;
   if (WiFi.status() == WL_CONNECTED) {
     if (!s_up) {
       s_up = true;

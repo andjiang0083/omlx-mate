@@ -34,11 +34,14 @@ static uint32_t lastRenderMs = 0;
 static uint32_t lastBatteryMs = 0;
 static bool otaStarted = false;
 static bool webStarted = false;
+static bool s_radioOff = false;   // 射频已关（熄屏）
+static bool s_pulled = false;     // 本轮已主动拉过快照
 static char lineBuf[160];
 static size_t lineLen = 0;
 
 static void beep(int freq = 1800) { M5.Speaker.tone(freq, 12); }
 static void wakeScreen();
+static void enterSleep();
 
 // ---------------------------------------------------------------- 命令
 void appApplyCommand(const char* type, int value) {
@@ -156,13 +159,42 @@ static void wakeScreen() {
   lastActivityMs = millis();
   if (!screenOn) {
     screenOn = true;
+    setCpuFrequencyMhz(AWAKE_CPU_MHZ);
+    M5.Display.wakeup();
     bright = g_cfg.brightness;
     M5.Display.setBrightness(bright);
+    lastBatteryMs = 0;      // 立刻采一次电量
+    s_pulled = false;       // 重连后主动拉一次快照
     g_needRender = true;
+    if (s_radioOff) {
+      s_radioOff = false;
+      netOn();
+    }
+    Serial.println("[PWR] on (panel+radio up)");
   } else if (bright != g_cfg.brightness) {
     bright = g_cfg.brightness;
     M5.Display.setBrightness(bright);
   }
+}
+
+// 熄屏 = 主动下线：面板停扫描、服务器/OTA 停、射频关、CPU 降频
+static void enterSleep() {
+  if (!screenOn) return;
+  screenOn = false;
+  g_newSnapshot = false;
+  M5.Display.sleep();               // 关背光 + 面板停扫描（比只置亮度 0 再省一档）
+  if (webStarted) {
+    webStop();
+    webStarted = false;
+  }
+  if (otaStarted) {
+    ArduinoOTA.end();
+    otaStarted = false;
+  }
+  s_radioOff = true;
+  netOff();
+  setCpuFrequencyMhz(SLEEP_CPU_MHZ);
+  Serial.printf("[PWR] off (heap=%u)\n", static_cast<unsigned>(ESP.getFreeHeap()));
 }
 
 static void enterPortal() {
@@ -181,7 +213,14 @@ static void enterPortal() {
 
 // 返回 true = 需要进入配网页（长按重配网）
 static bool handleButtons() {
-  if (boardAnyKeyDown()) wakeScreen();
+  // 熄屏时第一下只负责亮屏：吃掉该次按下沿，第二下才翻页
+  if (!screenOn) {
+    if (boardAnyKeyDown()) {
+      wakeScreen();
+      boardPollKey();
+    }
+    return false;
+  }
   BoardKey k = boardPollKey();
   if (k == BK_RECONFIG) return true;
   if (k == BK_NEXT) {
@@ -267,21 +306,26 @@ void loop() {
   }
 
   netPoll();
-  if (netTakeConnectedEvent()) startServices();
+  if (netTakeConnectedEvent()) {
+    startServices();
+    if (!s_pulled) {
+      s_pulled = true;
+      agentPullSnapshot();
+    }
+  }
   if (webStarted) webLoop();
   if (otaStarted && netIsUp()) ArduinoOTA.handle();
 
   uint32_t now = millis();
-  if (now - lastBatteryMs > 5000) {
+  if (screenOn && now - lastBatteryMs > 5000) {
     lastBatteryMs = now;
     g_battery = M5.Power.getBatteryLevel();
     g_charging = M5.Power.isCharging();
   }
 
   uint32_t idle = now - lastActivityMs;
-  if (screenOn && !g_charging && idle > OFF_AFTER_MS) {
-    screenOn = false;
-    M5.Display.setBrightness(0);
+  if (screenOn && idle > OFF_AFTER_MS) {
+    enterSleep();          // 插着 USB 也一样：省电优先
   } else if (screenOn && idle > DIM_AFTER_MS && bright != DIM_BRIGHTNESS) {
     bright = DIM_BRIGHTNESS;
     M5.Display.setBrightness(bright);
@@ -305,5 +349,5 @@ void loop() {
     lastRenderMs = now;
   }
 
-  delay(15);
+  delay(screenOn ? 15 : SLEEP_POLL_MS);
 }

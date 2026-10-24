@@ -1,6 +1,7 @@
 #include "web.h"
 
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
 #include <M5Unified.h>
 #include <WebServer.h>
 
@@ -17,6 +18,7 @@
 
 static WebServer server(HTTP_PORT);
 static bool s_running = false;
+static char s_agentHost[44] = "";   // 最近一次推送的来源 "ip:port"（唤醒后主动拉用）
 
 // ---------------------------------------------------------------- 解析
 static void parseRange(JsonVariantConst v, RangeData& r) {
@@ -178,6 +180,12 @@ static void handleSnapshot() {
     server.send(400, "application/json", "{\"ok\":0,\"error\":\"bad json\"}");
     return;
   }
+  // 记住推送方地址：熄屏断网后，唤醒时靠它主动 GET 一次（绕过 mDNS 等待）
+  String hostHdr = server.header("Host");
+  if (hostHdr.length() && hostHdr.length() < sizeof(s_agentHost)) {
+    std::snprintf(s_agentHost, sizeof(s_agentHost), "%s", hostHdr.c_str());
+  }
+
   g_newSnapshot = true;
   g_needRender = true;
   if (g_page >= g_display.count) g_page = 0;
@@ -231,8 +239,45 @@ void webBegin() {
   Serial.printf("[WEB] listening :%d\n", HTTP_PORT);
 }
 
+void webStop() {
+  if (!s_running) return;
+  server.stop();
+  s_running = false;
+  Serial.println("[WEB] stopped");
+}
+
 void webLoop() {
   if (s_running) server.handleClient();
 }
 
 bool webIsRunning() { return s_running; }
+
+// 唤醒后主动 GET 一次：agent 每 push_seconds 才推一轮，等推送最坏要 5s；主动拉约 300ms
+bool agentPullSnapshot() {
+  if (!s_agentHost[0] || !netIsUp()) return false;
+  char url[128];
+  std::snprintf(url, sizeof(url), "http://%s/api/snapshot?k=%s", s_agentHost, g_cfg.token);
+  HTTPClient http;
+  http.setConnectTimeout(1500);
+  http.setTimeout(2000);
+  bool ok = false;
+  if (http.begin(url)) {
+    int code = http.GET();
+    if (code == 200) {
+      String body = http.getString();
+      JsonDocument doc;
+      int ack = 0;
+      if (!deserializeJson(doc, body) && parseSnapshot(doc, g_snap, g_display, ack)) {
+        ok = true;
+        g_newSnapshot = true;
+        g_needRender = true;
+        if (g_page >= g_display.count) g_page = 0;
+      }
+    }
+    http.end();
+    Serial.printf("[PULL] %s code=%d ok=%d\n", s_agentHost, code, ok ? 1 : 0);
+  } else {
+    Serial.printf("[PULL] %s begin failed\n", s_agentHost);
+  }
+  return ok;
+}
