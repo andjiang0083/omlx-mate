@@ -5,6 +5,11 @@
 
 #include <M5Unified.h>
 
+#include <driver/gpio.h>
+#include <esp_sleep.h>
+
+#include "config.h"
+
 #ifdef BOARD_CARDPUTER
 #include <M5Cardputer.h>
 #endif
@@ -17,6 +22,8 @@ inline void boardBegin() {
   cfg.fallback_board = m5::board_t::board_M5Cardputer;
   M5Cardputer.begin(cfg);
 #else
+  // 本产品不用 IMU：不初始化 BMI270，省掉它在 ODR 上的常驻采样电流（~0.7mA）
+  cfg.internal_imu = false;
   M5.begin(cfg);
 #endif
 }
@@ -44,6 +51,52 @@ inline void boardSpeakerSetup() {
 inline void boardPowerSetup() {
 #ifndef BOARD_CARDPUTER
   M5.Power.setExtOutput(false);   // StickS3 的 Grove 供电脚；Cardputer 无此语义
+#endif
+}
+
+// ---------------------------------------------------------------- 熄屏真睡（light sleep）
+// 熄屏档的目标不是"降频轮询"，是让 CPU 真的睡过去：RAM 保留 → 按键即续跑，画面上屏 ~0.2s。
+// StickS3 按键是纯 GPIO（GPIO11/12，已核 .pio/libdeps/*/M5Unified/src/M5Unified.inl 的
+// board_M5StickS3 分支）→ 可做 GPIO 低电平唤醒；Cardputer 键盘挂在 TCA8418(I2C) 上，
+// GPIO 唤不动 → 该板继续用轮询档。
+#ifndef BOARD_CARDPUTER
+static constexpr int BOARD_WAKE_GPIO_A = 11;   // BtnA
+static constexpr int BOARD_WAKE_GPIO_B = 12;   // BtnB
+#endif
+
+// 熄屏后的一次"睡到按键"。Cardputer 上退化为短延时（原 0.2.3 行为）。
+inline void boardSleepTier() {
+#ifdef BOARD_CARDPUTER
+  delay(SLEEP_POLL_MS);
+#else
+  gpio_config_t gc = {};
+  gc.pin_bit_mask = (1ULL << BOARD_WAKE_GPIO_A) | (1ULL << BOARD_WAKE_GPIO_B);
+  gc.mode = GPIO_MODE_INPUT;
+  gc.pull_up_en = GPIO_PULLUP_ENABLE;        // 按键低有效：悬浮高电平永远唤不醒
+  gc.pull_down_en = GPIO_PULLDOWN_DISABLE;
+  gc.intr_type = GPIO_INTR_LOW_LEVEL;        // ⚠️ 枚举是 LOW_LEVEL，不是 LOWLEVEL
+  gpio_config(&gc);
+  gpio_wakeup_enable((gpio_num_t)BOARD_WAKE_GPIO_A, GPIO_INTR_LOW_LEVEL);
+  gpio_wakeup_enable((gpio_num_t)BOARD_WAKE_GPIO_B, GPIO_INTR_LOW_LEVEL);
+  esp_sleep_enable_gpio_wakeup();            // 不设定时器：一觉睡到按键
+  if (esp_light_sleep_start() != ESP_OK) delay(SLEEP_POLL_MS);  // 睡不进去就退轮询，绝不留热循环
+  gpio_wakeup_disable((gpio_num_t)BOARD_WAKE_GPIO_A);
+  gpio_wakeup_disable((gpio_num_t)BOARD_WAKE_GPIO_B);
+#endif
+}
+
+// 熄屏/唤醒时的音频硬件开关。stop() 只停播放，ES8311 + AW8737 仍通电 ——
+// 在 light sleep 的唤醒边缘会放大 I2S 残余，真机表现为周期底噪。
+inline void boardAudioOff() {
+#ifndef BOARD_CARDPUTER
+  M5.Speaker.end();
+#endif
+}
+
+inline void boardAudioOn() {
+#ifndef BOARD_CARDPUTER
+  M5.Speaker.begin();
+  boardSpeakerSetup();
 #endif
 }
 

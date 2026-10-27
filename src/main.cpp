@@ -36,6 +36,7 @@ static bool otaStarted = false;
 static bool webStarted = false;
 static bool s_radioOff = false;   // 射频已关（熄屏）
 static bool s_pulled = false;     // 本轮已主动拉过快照
+static bool s_plugged = false;    // 最近一次 VBUS 采样：插着线
 static char lineBuf[160];
 static size_t lineLen = 0;
 
@@ -161,6 +162,7 @@ static void wakeScreen() {
     screenOn = true;
     setCpuFrequencyMhz(AWAKE_CPU_MHZ);
     M5.Display.wakeup();
+    boardAudioOn();         // 熄屏时功放已断电，唤醒后重建（Cardputer 上是空操作）
     bright = g_cfg.brightness;
     M5.Display.setBrightness(bright);
     lastBatteryMs = 0;      // 立刻采一次电量
@@ -177,7 +179,7 @@ static void wakeScreen() {
   }
 }
 
-// 熄屏 = 主动下线：面板停扫描、服务器/OTA 停、射频关、CPU 降频
+// 熄屏 = 主动下线 + CPU 真睡：面板停扫描、服务器/OTA 停、射频关、音频硬件断电
 static void enterSleep() {
   if (!screenOn) return;
   screenOn = false;
@@ -193,6 +195,7 @@ static void enterSleep() {
   }
   s_radioOff = true;
   netOff();
+  boardAudioOff();                  // stop() 只停播放，amp 仍通电（睡醒边缘会放大 I2S 残余）
   setCpuFrequencyMhz(SLEEP_CPU_MHZ);
   Serial.printf("[PWR] off (heap=%u)\n", static_cast<unsigned>(ESP.getFreeHeap()));
 }
@@ -260,6 +263,9 @@ void setup() {
   boardScreenSetup();
   M5.Display.setBrightness(DEFAULT_BRIGHTNESS);
   boardSpeakerSetup();
+#ifndef BOARD_CARDPUTER
+  setCpuFrequencyMhz(AWAKE_CPU_MHZ);   // 醒着档也不需要 240MHz（Cardputer 保持默认 240）
+#endif
 
   uiBegin();
   uiSplash("正在启动", "读取配置…", "v" FW_VERSION);
@@ -323,15 +329,25 @@ void loop() {
     g_charging = M5.Power.isCharging();
   }
 
+  // 插线（VBUS>1V）= 桌面上有人在用：豁免熄屏，但仍然变暗（避免整夜满背光）
+  // ⚠️ 不能用 isCharging()：满电时它返回 false，会让插着线的设备在充满那刻熄屏。
+  if (screenOn && USB_KEEP_AWAKE) {
+    static uint32_t vbusAt = 0;
+    if (now - vbusAt >= VBUS_POLL_MS) {
+      vbusAt = now;
+      s_plugged = M5.Power.getVBUSVoltage() > 1000;
+    }
+  }
+
   uint32_t idle = now - lastActivityMs;
-  if (screenOn && idle > OFF_AFTER_MS) {
-    enterSleep();          // 插着 USB 也一样：省电优先
+  if (screenOn && idle > OFF_AFTER_MS && !(USB_KEEP_AWAKE && s_plugged)) {
+    enterSleep();          // 熄屏 = 下线 + CPU 真睡
   } else if (screenOn && idle > DIM_AFTER_MS && bright != DIM_BRIGHTNESS) {
     bright = DIM_BRIGHTNESS;
     M5.Display.setBrightness(bright);
   }
 
-  if (screenOn && (g_needRender || g_newSnapshot || now - lastRenderMs > 1000)) {
+  if (screenOn && (g_needRender || g_newSnapshot || now - lastRenderMs > FORCED_RENDER_MS)) {
     g_needRender = false;
     g_newSnapshot = false;
     UiState st;
@@ -349,5 +365,11 @@ void loop() {
     lastRenderMs = now;
   }
 
-  delay(screenOn ? 15 : SLEEP_POLL_MS);
+#ifdef BOARD_CARDPUTER
+  delay(screenOn ? 15 : SLEEP_POLL_MS);   // 保持 0.2.3 代码形状（该板不做 light sleep）
+#else
+  // 熄屏档：直接睡到按键（RAM 保留，唤醒即续跑），不再 100ms 空转
+  if (screenOn) delay(15);
+  else boardSleepTier();
+#endif
 }

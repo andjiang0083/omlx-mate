@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4 — 2026-10-27
+
+- 熄屏档从「80MHz 每 100ms 轮询」改为 **light sleep：睡到按键才醒**（`esp_light_sleep_start()` + GPIO11/12 低电平唤醒）。RAM 保留，唤醒即续跑，缓存的快照直接重绘（首帧 ~0.2s，比原来重连等推送更快）
+- StickS3 **插线（VBUS>1V）不再熄屏**，只按原节奏变暗；Cardputer 保持 0.2.3「插电也熄屏」（充电弱）
+- 醒着档降耗：WiFi 开 modem sleep（原来是射频常亮接收 `setSleep(false)`）、CPU 240→80MHz、整屏重绘兜底 1s→60s
+- 熄屏时功放硬件断电（`Speaker.end()`，不只是 `stop()`）；IMU 不再初始化（本产品不用 IMU）
+- Cardputer 版零改动：`.flash.text` / `.iram0.text` 与 0.2.3 逐字节相同（已用 objcopy 比对）
+- 详见 `docs/SPEC-0.2.4-power.md`
+
 ## 0.2.3 — 2026-10-23
 
 - 省电重做：**熄屏 = 主动下线**。熄屏后关射频（`WiFi.mode(WIFI_OFF)`）、停 HTTP/mDNS/OTA、面板停扫描、CPU 240→80MHz，主循环 100ms 只扫按键

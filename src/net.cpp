@@ -20,7 +20,7 @@ void netBegin(const Config& cfg) {
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(false);
-  WiFi.setSleep(false);
+  WiFi.setSleep(WIFI_MODEM_SLEEP);   // StickS3: 射频按 DTIM 睡（推 5s 一次，延迟无感）
   WiFi.setHostname(g_hostname);
   if (cfg.ssid[0]) {
     WiFi.begin(cfg.ssid, cfg.pass);

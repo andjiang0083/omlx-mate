@@ -3,7 +3,7 @@
 
 // ---------------------------------------------------------------- 产品身份
 #define FW_NAME "oMLX Mate"
-#define FW_VERSION "0.2.3"
+#define FW_VERSION "0.2.4"
 #define FW_BUILD __DATE__ " " __TIME__
 
 // ---------------------------------------------------------------- 屏幕
@@ -32,12 +32,27 @@ static constexpr int SCREEN_H = 135;
 // ---------------------------------------------------------------- 行为参数
 static constexpr uint32_t FETCH_INTERVAL_MS = 5000;      // 醒着时轮询
 static constexpr uint32_t DIM_AFTER_MS = 60000;           // 变暗
-static constexpr uint32_t OFF_AFTER_MS = 120000;          // 熄屏 = 下线（充电也一样）
+static constexpr uint32_t OFF_AFTER_MS = 120000;          // 熄屏 = 下线（StickS3 插线时豁免）
 static constexpr uint8_t DEFAULT_BRIGHTNESS = 75;
 static constexpr uint8_t DIM_BRIGHTNESS = 35;
 static constexpr uint32_t SLEEP_CPU_MHZ = 80;             // 熄屏后降频
+static constexpr uint32_t SLEEP_POLL_MS = 100;            // 熄屏主循环间隔（Cardputer 轮询档）
+
+// ---------------------------------------------------------------- 省电口径（仅 StickS3，见 docs/SPEC-0.2.4-power.md）
+// 共享 src 被两个 env 编译；新行为一律只作用在 StickS3 分支，Cardputer 保持 0.2.3 原值。
+#ifdef BOARD_CARDPUTER
 static constexpr uint32_t AWAKE_CPU_MHZ = 240;
-static constexpr uint32_t SLEEP_POLL_MS = 100;            // 熄屏主循环间隔
+static constexpr uint32_t FORCED_RENDER_MS = 1000;   // 每 1s 兜底整屏重绘
+static constexpr bool WIFI_MODEM_SLEEP = false;      // 射频常亮接收
+static constexpr bool USB_KEEP_AWAKE = false;        // 插线豁免熄屏（Cardputer 充电弱，不启用）
+#else
+static constexpr uint32_t AWAKE_CPU_MHZ = 80;        // 重绘瓶颈是 SPI，240MHz 只是空转
+static constexpr uint32_t FORCED_RENDER_MS = 60000;  // 内容只在快照变化/翻页时变
+static constexpr bool WIFI_MODEM_SLEEP = true;       // 射频按 DTIM 睡，推 5s 一次无感
+static constexpr bool USB_KEEP_AWAKE = true;         // 插线（VBUS>1V）= 不熄屏，只变暗
+#endif
+static constexpr uint32_t VBUS_POLL_MS = 2000;       // VBUS 是 I2C 读，必须节流
+
 static constexpr uint32_t AGENT_PORT = 8788;              // agent 监听端口（Host 头缺失时兜底）
 static constexpr uint32_t HTTP_TIMEOUT_MS = 6000;
 static constexpr uint32_t WIFI_TIMEOUT_MS = 20000;
