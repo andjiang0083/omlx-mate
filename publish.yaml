@@ -5,12 +5,12 @@ platform_entries:
   - name: oMLX Mate
     device: StickS3
     category: Tools
-    version: "0.2.3"
-    bin: releases/omlx-mate-v0.2.3-merged.bin
+    version: "0.2.4"
+    bin: releases/omlx-mate-v0.2.4-merged.bin
     cover: releases/cover-1280x720-omlx-mate-sticks3.png
     project_link: "https://github.com/andjiang0083/omlx-mate"
-    readback: 2026-10-24 PENDING vid=2114020111738544129   # 0.2.3 已提交（0.2.1 仍在线）
-    published_version: 0.2.1
+    readback: 2026-10-26 PUBLISHED vid=2114020111738544129   # 0.2.3 已过审上线；0.2.4 待提交
+    published_version: 0.2.3
     github: https://github.com/andjiang0083/omlx-mate
   - name: oMLX Mate [cardputer]
     device: Cardputer ADV
