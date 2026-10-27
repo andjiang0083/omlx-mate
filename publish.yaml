@@ -9,7 +9,7 @@ platform_entries:
     bin: releases/omlx-mate-v0.2.4-merged.bin
     cover: releases/cover-1280x720-omlx-mate-sticks3.png
     project_link: "https://github.com/andjiang0083/omlx-mate"
-    readback: 2026-10-26 PUBLISHED vid=2114020111738544129   # 0.2.3 已过审上线；0.2.4 待提交
+    readback: 2026-10-27 PENDING vid=2115098896638484482   # 0.2.4 已提交（线上 0.2.3）
     published_version: 0.2.3
     github: https://github.com/andjiang0083/omlx-mate
   - name: oMLX Mate [cardputer]
@@ -19,5 +19,5 @@ platform_entries:
     bin: releases/omlx-mate-v0.2.3-cardputer-merged.bin
     cover: releases/cover-1280x720-omlx-mate-cardputeradv.png
     project_link: "https://github.com/andjiang0083/omlx-mate"
-    readback: 2026-10-24 PENDING vid=2114014425113763842   # 0.2.3 已提交（0.2.2 撤回为 DRAFT）
+    readback: 2026-10-26 PUBLISHED vid=2114014425113763842   # 0.2.3 在线；0.2.4 本目标二进制未变，不发新版
     github: https://github.com/andjiang0083/omlx-mate
