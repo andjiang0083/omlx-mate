@@ -7,3 +7,6 @@ agent/__pycache__/
 src/assets.h
 releases/*.bin
 releases/*.sha256
+
+# PlatformIO 编译期生成的 IDF 组件清单备份
+src/idf_component.yml.orig
